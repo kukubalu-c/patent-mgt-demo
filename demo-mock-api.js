@@ -174,6 +174,11 @@
             return handleSettingsQuery(s, params);
         }
 
+        // ============ SUM 聚合查询（不含 GROUP BY，如费用总计）============
+        if (/SUM\s*\(/i.test(s) && !/GROUP\s+BY/i.test(s)) {
+            return handleSumQuery(s, params);
+        }
+
         // ============ 聚合 / GROUP BY 查询 ============
         if (/GROUP\s+BY/i.test(s)) {
             return handleGroupByQuery(s, params);
@@ -257,6 +262,16 @@
         return [{ cnt: 0 }];
     }
 
+    // SUM 聚合查询（不含 GROUP BY，如费用总计）
+    function handleSumQuery(sql, params) {
+        // SELECT SUM(amount) as grand_total FROM fee_tasks WHERE ...
+        if (/grand_total/i.test(sql) || /SUM\s*\(\s*amount\s*\)/i.test(sql)) {
+            // 与预算汇总表一致：2340+1830+150+2500+650 = 7470
+            return [{ grand_total: 7470 }];
+        }
+        return [{ grand_total: 0 }];
+    }
+
     // GROUP BY 聚合查询
     function handleGroupByQuery(sql, params) {
         // 柱状图: GROUP BY patent_type, year
@@ -284,13 +299,12 @@
         }
         // 预算汇总: GROUP BY fee_type
         if (/fee_type.*SUM/i.test(sql)) {
-            // 根据 params 中的日期范围过滤
             return [
                 { fee_type: '申请费', total: 2340, count: 6 },
                 { fee_type: '年费', total: 1830, count: 8 },
                 { fee_type: '公布印刷费', total: 150, count: 5 },
                 { fee_type: '实质审查费', total: 2500, count: 1 },
-                { fee_type: '授权登记费', total: 750, count: 3 },
+                { fee_type: '授权登记费', total: 650, count: 3 },
             ];
         }
         return [];
@@ -298,13 +312,47 @@
 
     // 费用明细（含 JOIN）
     function handleFeeDetailQuery(sql, params) {
-        // JOIN fee_tasks + patents
-        return [
-            { patent_no: '202010123456.7', patent_name: '一种基于深度学习的图像识别方法', year_index: 1, amount: 135, due_date: daysLater(-30), status: '待缴费', paid_date: null },
-            { patent_no: '202010123456.7', patent_name: '一种基于深度学习的图像识别方法', year_index: 2, amount: 135, due_date: daysLater(60), status: '待缴费', paid_date: null },
-            { patent_no: '202110234567.8', patent_name: '一种智能垃圾分类装置', year_index: 1, amount: 90, due_date: daysAgo(15), status: '待缴费', paid_date: null },
-            { patent_no: '202210345678.9', patent_name: '智能手表（圆形表盘）', year_index: 1, amount: 600, due_date: daysAgo(5), status: '待缴费', paid_date: null },
-        ];
+        // 按费用类型分组，与 handleGroupByQuery 汇总数据精确一致
+        var feeDetailMap = {
+            '申请费': [ // 6笔 ¥2,340
+                { patent_no: '202410789012.3', patent_name: '一种新型可折叠电子设备', year_index: null, amount: 900, due_date: daysLater(10), status: '待缴费', paid_date: null },
+                { patent_no: '202410890123.4', patent_name: '一种环保型包装材料', year_index: null, amount: 75, due_date: daysAgo(60), status: '已缴费', paid_date: daysAgo(65) },
+                { patent_no: '202410901234.5', patent_name: '智能水杯', year_index: null, amount: 75, due_date: daysLater(35), status: '待缴费', paid_date: null },
+                { patent_no: '202310678901.2', patent_name: '基于AI的语音助手交互方法', year_index: null, amount: 270, due_date: daysLater(20), status: '待缴费', paid_date: null },
+                { patent_no: '202210456789.0', patent_name: '一种区块链数据存储方法及系统', year_index: null, amount: 270, due_date: daysLater(45), status: '待缴费', paid_date: null },
+                { patent_no: '202010123457.8', patent_name: '一种数据处理算法（已驳回）', year_index: null, amount: 750, due_date: daysAgo(500), status: '已失效', paid_date: null },
+            ],
+            '年费': [ // 8笔 ¥1,830
+                { patent_no: '202210345678.9', patent_name: '智能手表（圆形表盘）', year_index: 1, amount: 600, due_date: daysAgo(5), status: '待缴费', paid_date: null },
+                { patent_no: '202210345678.9', patent_name: '智能手表（圆形表盘）', year_index: 2, amount: 600, due_date: daysLater(120), status: '待缴费', paid_date: null },
+                { patent_no: '202010123456.7', patent_name: '一种基于深度学习的图像识别方法', year_index: 1, amount: 135, due_date: daysLater(-30), status: '待缴费', paid_date: null },
+                { patent_no: '202010123456.7', patent_name: '一种基于深度学习的图像识别方法', year_index: 2, amount: 135, due_date: daysLater(60), status: '待缴费', paid_date: null },
+                { patent_no: '202110234567.8', patent_name: '一种智能垃圾分类装置', year_index: 1, amount: 90, due_date: daysAgo(15), status: '待缴费', paid_date: null },
+                { patent_no: '202110234567.8', patent_name: '一种智能垃圾分类装置', year_index: 2, amount: 90, due_date: daysLater(90), status: '待缴费', paid_date: null },
+                { patent_no: '202310567890.1', patent_name: '一种自动化农业灌溉系统', year_index: 1, amount: 90, due_date: daysAgo(60), status: '已缴费', paid_date: daysAgo(65) },
+                { patent_no: '202310567890.1', patent_name: '一种自动化农业灌溉系统', year_index: 2, amount: 90, due_date: daysLater(120), status: '待缴费', paid_date: null },
+            ],
+            '公布印刷费': [ // 5笔 ¥150
+                { patent_no: '202410789012.3', patent_name: '一种新型可折叠电子设备', year_index: null, amount: 50, due_date: daysLater(10), status: '待缴费', paid_date: null },
+                { patent_no: '202410890123.4', patent_name: '一种环保型包装材料', year_index: null, amount: 0, due_date: daysAgo(60), status: '已缴费', paid_date: daysAgo(65) },
+                { patent_no: '202410901234.5', patent_name: '智能水杯', year_index: null, amount: 0, due_date: daysLater(35), status: '待缴费', paid_date: null },
+                { patent_no: '202310678901.2', patent_name: '基于AI的语音助手交互方法', year_index: null, amount: 50, due_date: daysLater(20), status: '待缴费', paid_date: null },
+                { patent_no: '202210456789.0', patent_name: '一种区块链数据存储方法及系统', year_index: null, amount: 50, due_date: daysLater(45), status: '待缴费', paid_date: null },
+            ],
+            '实质审查费': [ // 1笔 ¥2,500
+                { patent_no: '202210456789.0', patent_name: '一种区块链数据存储方法及系统', year_index: null, amount: 2500, due_date: daysLater(700), status: '待缴费', paid_date: null },
+            ],
+            '授权登记费': [ // 3笔 ¥650
+                { patent_no: '202010123456.7', patent_name: '一种基于深度学习的图像识别方法', year_index: null, amount: 250, due_date: daysAgo(400), status: '已缴费', paid_date: daysAgo(410) },
+                { patent_no: '202110234567.8', patent_name: '一种智能垃圾分类装置', year_index: null, amount: 200, due_date: daysAgo(200), status: '已缴费', paid_date: daysAgo(210) },
+                { patent_no: '202210345678.9', patent_name: '智能手表（圆形表盘）', year_index: null, amount: 200, due_date: daysAgo(150), status: '已缴费', paid_date: daysAgo(160) },
+            ],
+        };
+        // 根据第一个参数（feeType）筛选，只返回对应费用类型的明细
+        if (params && params.length > 0 && feeDetailMap[params[0]]) {
+            return feeDetailMap[params[0]];
+        }
+        return [];
     }
 
     // patents 表 SELECT 查询
@@ -750,8 +798,8 @@
     // ============================================
     window.patentAPI = {
         // ---- 数据库操作 ----
-        dbQuery: mockDbQuery,
-        dbRun: mockDbRun,
+        dbQuery: async function(sql, params) { return mockDbQuery(sql, params); },
+        dbRun: async function(sql, params) { return mockDbRun(sql, params); },
 
         // ---- 密码锁 ----
         checkPasswordSet: async function () {
