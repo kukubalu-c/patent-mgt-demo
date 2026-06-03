@@ -6,6 +6,13 @@
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
     <title>企业专利全生命周期管理系统 - 演示版</title>
     <link rel="stylesheet" href="src/css/style.css">
+    <style>
+        /* 修复：饼图 tooltip 被导航栏遮挡 */
+        #pieChart { overflow: visible !important; }
+        .dashboard-card { overflow: visible !important; }
+        .page-content { overflow: visible !important; }
+        .main-content { overflow-x: visible !important; }
+    </style>
 </head>
 <body>
     <!-- 作用：应用密码锁页面 -->
@@ -619,5 +626,34 @@
     <script src="demo-lib/xlsx.full.min.js"></script>
     <script src="demo-lib/echarts.min.js"></script>
     <script src="src/js/dashboard.js"></script>
+    <script>
+    // 修复：饼图 tooltip 向右显示，避免被左侧导航栏遮挡
+    (function() {
+        var timer = setInterval(function() {
+            var chart = echarts.getInstanceByDom(document.getElementById('pieChart'));
+            if (chart) {
+                chart.setOption({
+                    tooltip: {
+                        position: function(pt, params, dom, rect, size) {
+                            // 始终在鼠标右侧显示
+                            var x = pt[0] + 20;
+                            var y = pt[1] - 10;
+                            // 不超出右边界
+                            if (x + size.contentSize[0] > size.viewSize[0]) {
+                                x = size.viewSize[0] - size.contentSize[0] - 5;
+                            }
+                            // 不超出上边界
+                            if (y < 5) y = 5;
+                            return [x, y];
+                        }
+                    }
+                });
+                clearInterval(timer);
+            }
+        }, 200);
+        // 最多等5秒，超时停止
+        setTimeout(function() { clearInterval(timer); }, 5000);
+    })();
+    </script>
 </body>
 </html>
