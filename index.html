@@ -12,6 +12,33 @@
         .dashboard-card { overflow: visible !important; }
         .page-content { overflow: visible !important; }
         .main-content { overflow-x: visible !important; }
+        /* AI 智能工具页样式 */
+        .ai-layout { display:flex; gap:16px; align-items:stretch; }
+        .ai-left { flex:1; min-width:0; display:flex; flex-direction:column; }
+        .ai-right { width:420px; min-width:320px; display:flex; }
+        .ai-task-item { display:flex; flex-wrap:wrap; align-items:center; padding:10px 12px; border:1px solid #e8e8e8; border-radius:6px; margin-bottom:8px; cursor:pointer; transition:all .2s; }
+        .ai-task-item:hover { border-color:#1890ff; background:#f0f8ff; }
+        .ai-task-item input[type="radio"] { margin-right:10px; }
+        .ai-task-label { font-size:14px; font-weight:500; color:#333; width:calc(100% - 30px); }
+        .ai-task-desc { font-size:12px; color:#999; width:100%; padding-left:26px; margin-top:2px; }
+        .ai-textarea { width:100%; height:80px; border:1px solid #d9d9d9; border-radius:6px; padding:8px 12px; font-size:14px; font-family:inherit; resize:vertical; outline:none; transition:border-color .2s; box-sizing:border-box; }
+        .ai-textarea:focus { border-color:#1890ff; box-shadow:0 0 0 2px rgba(24,144,255,.1); }
+        .ai-textarea-group { margin-bottom:6px; }
+        .ai-textarea-label { font-size:12px; color:#666; margin-bottom:2px; display:block; font-weight:500; }
+        .ai-textarea-hidden { display:none; }
+        .ai-status { font-size:13px; padding:12px 16px; border-radius:6px; margin-bottom:12px; }
+        .ai-status-idle { background:#f6f8fa; color:#888; }
+        .ai-status-loading { background:#e6f7ff; color:#1890ff; border:1px solid #91d5ff; }
+        .ai-status-done { background:#f6ffed; color:#52c41a; border:1px solid #b7eb8f; }
+        .ai-status-error { background:#fff2f0; color:#f5222d; border:1px solid #ffa39e; }
+        .ai-result-content { flex:1; min-height:120px; font-size:14px; line-height:1.7; color:#333; padding:12px; background:#fafafa; border-radius:6px; white-space:pre-wrap; overflow-y:auto; border:1px solid #e8e8e8; }
+        .ai-result-actions { margin-top:12px; display:flex; gap:8px; }
+        .ai-result-ipc { font-size:28px; font-weight:600; color:#1890ff; text-align:center; padding:20px 0; font-family:Consolas,monospace; }
+        .ai-result-ipc-desc { text-align:center; font-size:13px; color:#666; margin-bottom:8px; }
+        .ai-result-ipc-conf { text-align:center; font-size:12px; color:#999; }
+        .ai-star { cursor:pointer; font-size:18px; color:#faad14; transition:transform .15s; user-select:none; display:inline-block; }
+        .ai-star:hover { transform:scale(1.3); }
+        .ai-star.active { color:#faad14; }
     </style>
 </head>
 <body>
@@ -93,6 +120,12 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
                         </span>
                         <span class="nav-text">数据中心</span>
+                    </button>
+                    <button class="nav-item" data-page="aitool">
+                        <span class="nav-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z"/><circle cx="17.5" cy="17.5" r="3.5" fill="currentColor" opacity="0.3"/></svg>
+                        </span>
+                        <span class="nav-text">智能生成</span>
                     </button>
                 </nav>
                 <div class="sidebar-bottom">
@@ -466,6 +499,88 @@
                                     </table>
                                 </div>
                             </div>
+                            <!-- ====== AI 生成历史 ====== -->
+                            <div class="card" style="margin-top:16px;">
+                                <div class="card-header"><span class="card-title">AI 生成历史</span></div>
+                                <div class="card-body">
+                                    <table class="import-table">
+                                        <thead><tr><th>时间</th><th>任务</th><th>输入摘要</th><th>结果</th></tr></thead>
+                                        <tbody id="aiHistoryBody">
+                                            <tr><td colspan="4" class="text-center text-muted">暂无记录</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ====== AI 智能工具页 ====== -->
+                <div id="aiToolPage" class="page-content">
+                    <div class="wb-page-header">
+                        <h2>智能生成</h2>
+                        <p>利用人工智能辅助专利撰写与分析</p>
+                    </div>
+                    <div class="ai-layout">
+                        <div class="ai-left">
+                            <div class="card">
+                                <div class="card-header"><span class="card-title">任务选择</span></div>
+                                <div class="card-body">
+                                    <label class="ai-task-item">
+                                        <input type="radio" name="aiTask" value="classify" checked>
+                                        <span class="ai-task-label">📋 生成 IPC 分类号</span>
+                                        <span class="ai-task-desc">根据专利摘要/交底书/说明书（部分）推断国际专利分类号</span>
+                                    </label>
+                                    <label class="ai-task-item">
+                                        <input type="radio" name="aiTask" value="summarize">
+                                        <span class="ai-task-label">📝 生成摘要</span>
+                                        <span class="ai-task-desc">根据交底书或说明书全文提炼摘要</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="card" style="margin-top:12px;">
+                                <div class="card-header"><span class="card-title">输入内容</span></div>
+                                <div class="card-body">
+                                    <div class="ai-textarea-group" id="aiGroupAbstract">
+                                        <label class="ai-textarea-label">摘要</label>
+                                        <textarea id="aiInputAbstract" class="ai-textarea" placeholder="请粘贴专利摘要……"></textarea>
+                                    </div>
+                                    <div class="ai-textarea-group" id="aiGroupSpec">
+                                        <label class="ai-textarea-label">说明书</label>
+                                        <textarea id="aiInputSpec" class="ai-textarea" placeholder="请粘贴专利说明书……"></textarea>
+                                    </div>
+                                    <div class="ai-textarea-group" id="aiGroupDisclosure">
+                                        <label class="ai-textarea-label">交底书</label>
+                                        <textarea id="aiInputDisclosure" class="ai-textarea" placeholder="请粘贴交底书……"></textarea>
+                                    </div>
+                                    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+                                        <button class="btn btn-primary" id="btnAiRun">▶ 开始生成</button>
+                                        <button class="btn btn-default" id="btnAiClear">清空</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-right">
+                            <div class="card" style="height:100%;">
+                                <div class="card-header"><span class="card-title">输出结果</span></div>
+                                <div class="card-body" style="display:flex;flex-direction:column;height:calc(100% - 48px);">
+                                    <div id="aiResultStatus" class="ai-status ai-status-idle">💡 等待输入，选择任务后点击「开始生成」</div>
+                                    <div id="aiResultContent" class="ai-result-content"></div>
+                                    <div id="aiResultActions" class="ai-result-actions hidden">
+                                        <button class="btn btn-primary btn-sm" id="btnAiCopy">📋 复制结果</button>
+                                        <span style="margin-left:auto;font-size:13px;color:#888;display:flex;align-items:center;gap:4px;">
+                                            <span>准确度：</span>
+                                            <span class="ai-stars" data-rating="0">
+                                                <span class="ai-star" data-value="1">☆</span>
+                                                <span class="ai-star" data-value="2">☆</span>
+                                                <span class="ai-star" data-value="3">☆</span>
+                                                <span class="ai-star" data-value="4">☆</span>
+                                                <span class="ai-star" data-value="5">☆</span>
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -620,6 +735,32 @@
     <script src="demo-mock-api.js"></script>
     <script src="src/js/api.js"></script>
     <script src="src/js/login.js"></script>
+    <script>
+    // AI 智能工具页导航（配合 login.js 中已有的导航逻辑）
+    (function() {
+        var aiBtn = document.querySelector('[data-page="aitool"]');
+        var aiPage = document.getElementById('aiToolPage');
+        if (!aiBtn || !aiPage) return;
+
+        // AI 工具按钮点击：显示 AI 页，隐藏标准页面
+        aiBtn.addEventListener('click', function() {
+            document.querySelectorAll('.page-content').forEach(function(p) {
+                p.classList.remove('active');
+            });
+            aiPage.classList.add('active');
+            initAiTool();
+        });
+
+        // 标准导航点击时隐藏 AI 工具页
+        document.querySelectorAll('.nav-item[data-page]').forEach(function(btn) {
+            if (btn.dataset.page !== 'aitool') {
+                btn.addEventListener('click', function() {
+                    aiPage.classList.remove('active');
+                });
+            }
+        });
+    })();
+    </script>
     <script src="src/js/workbench.js"></script>
     <script src="src/js/datahub.js"></script>
     <script src="src/js/db-migration.js"></script>
@@ -654,6 +795,150 @@
         // 最多等5秒，超时停止
         setTimeout(function() { clearInterval(timer); }, 5000);
     })();
+
+    // ============================================
+    // AI 智能工具页逻辑
+    // ============================================
+    var aiInited = false;
+    function initAiTool() {
+        if (aiInited) return;
+        aiInited = true;
+
+        // 任务切换：控制摘要框显隐
+        document.querySelectorAll('input[name="aiTask"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                document.getElementById('aiGroupAbstract').style.display =
+                    this.value === 'classify' ? '' : 'none';
+            });
+        });
+        // 初始状态：默认选中 classify，摘要框可见
+        var checkedTask = document.querySelector('input[name="aiTask"]:checked');
+        if (checkedTask && checkedTask.value !== 'classify') {
+            document.getElementById('aiGroupAbstract').style.display = 'none';
+        }
+
+        // 清空按钮
+        document.getElementById('btnAiClear').addEventListener('click', function() {
+            document.getElementById('aiInputAbstract').value = '';
+            document.getElementById('aiInputSpec').value = '';
+            document.getElementById('aiInputDisclosure').value = '';
+            document.getElementById('aiResultContent').innerHTML = '';
+            setAiStatus('idle', '💡 等待输入，选择任务后点击「开始生成」');
+            document.getElementById('aiResultActions').classList.add('hidden');
+        });
+
+        // 生成按钮
+        document.getElementById('btnAiRun').addEventListener('click', doAiTask);
+    }
+
+    function setAiStatus(type, msg) {
+        var el = document.getElementById('aiResultStatus');
+        el.className = 'ai-status ai-status-' + type;
+        el.textContent = msg;
+    }
+
+    function doAiTask() {
+        // 收集所有可见文本框的内容
+        var parts = [];
+        var groups = ['aiGroupAbstract', 'aiGroupSpec', 'aiGroupDisclosure'];
+        var labels = ['摘要', '说明书', '交底书'];
+        for (var i = 0; i < groups.length; i++) {
+            var group = document.getElementById(groups[i]);
+            var textarea = group.querySelector('textarea');
+            var val = textarea.value.trim();
+            if (group.style.display !== 'none' && val) {
+                parts.push('【' + labels[i] + '】\n' + val);
+            }
+        }
+        var input = parts.join('\n\n');
+        if (!input) { setAiStatus('error', '⚠️ 请先输入内容'); return; }
+
+        var taskType = document.querySelector('input[name="aiTask"]:checked').value;
+        var btn = document.getElementById('btnAiRun');
+        btn.disabled = true;
+        btn.textContent = '⏳ 生成中...';
+        setAiStatus('loading', '⏳ AI 分析中，请稍候...');
+        document.getElementById('aiResultContent').innerHTML = '';
+        document.getElementById('aiResultActions').classList.add('hidden');
+
+        // 调用模拟 API（演示版直接返回模拟结果）
+        window.patentAPI.aiClassify(input, taskType).then(function(result) {
+            if (taskType === 'classify') {
+                var html = '<div class="ai-result-ipc">' + result.ipc + '</div>';
+                html += '<div class="ai-result-ipc-desc">' + result.basis + '</div>';
+                html += '<div class="ai-result-ipc-conf">置信度：' + result.confidence + ' - ' + result.confidenceReason + '</div>';
+                document.getElementById('aiResultContent').innerHTML = html;
+                setAiStatus('done', '✅ IPC 分类完成');
+            } else {
+                document.getElementById('aiResultContent').textContent = result.summary;
+                setAiStatus('done', '✅ 摘要生成完成');
+            }
+            document.getElementById('aiResultActions').classList.remove('hidden');
+            addAiHistory(taskType, input, result);
+            btn.disabled = false;
+            btn.textContent = '▶ 开始生成';
+        }).catch(function(err) {
+            setAiStatus('error', '⚠️ 生成失败：' + (err.message || '未知错误'));
+            btn.disabled = false;
+            btn.textContent = '▶ 开始生成';
+        });
+    }
+
+    function addAiHistory(taskType, input, result) {
+        var tbody = document.getElementById('aiHistoryBody');
+        var empty = tbody.querySelector('tr td[colspan]');
+        if (empty) tbody.innerHTML = '';
+
+        var now = new Date();
+        var time = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+        var taskName = taskType === 'classify' ? '生成IPC分类号' : '生成摘要';
+        var summary = input.substring(0, 50) + (input.length > 50 ? '…' : '');
+        var resultText = taskType === 'classify' ? result.ipc : result.summary.substring(0, 30) + '…';
+
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + time + '</td><td>' + taskName + '</td><td>' + escapeHtml(summary) + '</td><td>' + escapeHtml(resultText) + '</td>';
+        tbody.insertBefore(tr, tbody.firstChild);
+
+        // 保持最多10条
+        while (tbody.children.length > 10) tbody.removeChild(tbody.lastChild);
+    }
+
+    // 复制按钮
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'btnAiCopy') {
+            var content = document.getElementById('aiResultContent');
+            var text = content.textContent || content.innerText;
+            if (text) {
+                navigator.clipboard.writeText(text).then(function() {
+                    e.target.textContent = '✅ 已复制';
+                    setTimeout(function() { e.target.textContent = '📋 复制结果'; }, 2000);
+                }).catch(function() {
+                    // fallback
+                    var ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    e.target.textContent = '✅ 已复制';
+                    setTimeout(function() { e.target.textContent = '📋 复制结果'; }, 2000);
+                });
+            }
+        }
+    });
+
+    // 准确度星星评分
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('ai-star')) {
+            var rating = parseInt(e.target.dataset.value);
+            var container = e.target.closest('.ai-stars');
+            container.dataset.rating = rating;
+            container.querySelectorAll('.ai-star').forEach(function(s) {
+                s.textContent = parseInt(s.dataset.value) <= rating ? '★' : '☆';
+                s.classList.toggle('active', parseInt(s.dataset.value) <= rating);
+            });
+        }
+    });
     </script>
 </body>
 </html>

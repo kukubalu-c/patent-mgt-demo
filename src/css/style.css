@@ -1766,3 +1766,32 @@ body {
 #pdTabLog .import-table tbody td {
     padding: 10px 12px;
 }
+
+/* ============================================ */
+/* AI 智能生成页样式 */
+/* ============================================ */
+.ai-layout { display:flex; gap:16px; align-items:stretch; }
+.ai-left { flex:1; min-width:0; display:flex; flex-direction:column; }
+.ai-right { width:420px; min-width:320px; display:flex; }
+.ai-task-item { display:flex; flex-wrap:wrap; align-items:center; padding:10px 12px; border:1px solid #e8e8e8; border-radius:6px; margin-bottom:8px; cursor:pointer; transition:all .2s; }
+.ai-task-item:hover { border-color:#1890ff; background:#f0f8ff; }
+.ai-task-item input[type="radio"] { margin-right:10px; }
+.ai-task-label { font-size:14px; font-weight:500; color:#333; width:calc(100% - 30px); }
+.ai-task-desc { font-size:12px; color:#999; width:100%; padding-left:26px; margin-top:2px; }
+.ai-textarea { width:100%; height:80px; border:1px solid #d9d9d9; border-radius:6px; padding:8px 12px; font-size:14px; font-family:inherit; resize:vertical; outline:none; transition:border-color .2s; box-sizing:border-box; }
+.ai-textarea:focus { border-color:#1890ff; box-shadow:0 0 0 2px rgba(24,144,255,.1); }
+.ai-textarea-group { margin-bottom:6px; }
+.ai-textarea-label { font-size:12px; color:#666; margin-bottom:2px; display:block; font-weight:500; }
+.ai-status { font-size:13px; padding:12px 16px; border-radius:6px; margin-bottom:12px; }
+.ai-status-idle { background:#f6f8fa; color:#888; }
+.ai-status-loading { background:#e6f7ff; color:#1890ff; border:1px solid #91d5ff; }
+.ai-status-done { background:#f6ffed; color:#52c41a; border:1px solid #b7eb8f; }
+.ai-status-error { background:#fff2f0; color:#f5222d; border:1px solid #ffa39e; }
+.ai-result-content { flex:1; min-height:120px; font-size:14px; line-height:1.7; color:#333; padding:12px; background:#fafafa; border-radius:6px; white-space:pre-wrap; overflow-y:auto; border:1px solid #e8e8e8; }
+.ai-result-actions { margin-top:12px; display:flex; gap:8px; }
+.ai-result-ipc { font-size:28px; font-weight:600; color:#1890ff; text-align:center; padding:20px 0; font-family:Consolas,monospace; }
+.ai-result-ipc-desc { text-align:center; font-size:13px; color:#666; margin-bottom:8px; }
+.ai-result-ipc-conf { text-align:center; font-size:12px; color:#999; }
+.ai-star { cursor:pointer; font-size:18px; color:#faad14; transition:transform .15s; user-select:none; display:inline-block; }
+.ai-star:hover { transform:scale(1.3); }
+.ai-star.active { color:#faad14; }

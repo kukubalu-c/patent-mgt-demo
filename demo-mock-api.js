@@ -873,6 +873,31 @@
 
         // ---- 事件监听 ----
         onBackupReady: function () {},
+
+        // ---- AI 智能工具（模拟） ----
+        aiClassify: async function (input, taskType) {
+            // 模拟 LLM 调用延迟
+            await new Promise(function (r) { setTimeout(r, 1500 + Math.random() * 1000); });
+            if (taskType === 'classify') {
+                var ipcs = [
+                    { ipc: 'G06F 17/30', basis: '电数字数据处理 → 信息检索；及其数据库结构', confidence: '高', confidenceReason: '摘要明确涉及信息检索算法，唯一指向G06F' },
+                    { ipc: 'G06N 3/08', basis: '基于特定计算模型的计算机系统 → 神经网络学习方法', confidence: '高', confidenceReason: '技术手段为神经网络训练，唯一指向G06N' },
+                    { ipc: 'G06K 9/62', basis: '用于阅读或识别印刷或书写字符的方法或装置 → 图像识别', confidence: '中', confidenceReason: '涉及图像识别，候选G06K/G06V，但G06K更贴近' },
+                    { ipc: 'H04L 29/06', basis: '数字信息的传输 → 以协议为特征的', confidence: '中', confidenceReason: '涉及通信协议，候选H04L/H04W，细节偏向H04L' },
+                    { ipc: 'G06Q 10/06', basis: '行政、管理、商业或经营通用的数据处理系统 → 资源或工作流管理', confidence: '低', confidenceReason: '涉及管理流程，可能涉及G06Q/G06F，信息不足以精确区分' },
+                    { ipc: 'A61B 5/00', basis: '用于诊断目的的测量 → 人体部位的测量', confidence: '低', confidenceReason: '仅提到医疗检测，未明确技术手段，推测到A61B' },
+                ];
+                var result = ipcs[Math.floor(Math.random() * ipcs.length)];
+                return result;
+            } else {
+                var summaries = [
+                    '本发明提供一种数据处理方法，包括：获取原始数据，对原始数据进行预处理，提取特征信息，基于预设算法对特征信息进行分析处理，输出分析结果。该方法能够有效提高数据处理效率和准确性。',
+                    '本实用新型公开了一种智能装置，包括壳体、控制模块、传感器模块和执行模块。控制模块分别与传感器模块和执行模块电连接。传感器模块用于采集环境数据，控制模块根据环境数据分析结果控制执行模块动作。',
+                    '本发明涉及一种图像识别方法及系统。该方法包括：构建卷积神经网络模型，利用训练数据集对模型进行训练，获取待识别图像，将待识别图像输入训练好的模型，输出识别结果。',
+                ];
+                return { summary: summaries[Math.floor(Math.random() * summaries.length)] };
+            }
+        },
     };
 
     console.log('[Demo Mock] window.patentAPI 已注入（演示模式）');
